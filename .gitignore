@@ -1,0 +1,16 @@
+# 依赖与构建产物
+node_modules/
+dist/
+
+# 本地数据（在 ~/.flux，不在这里；这里再保险拦一道）
+config.json
+session.json
+*.log
+
+# 临时 / 测试产物
+sample-面试题.md
+demo.txt
+*.tmp
+
+# 系统
+.DS_Store

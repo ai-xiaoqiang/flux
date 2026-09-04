@@ -1,0 +1,30 @@
+{
+  "name": "@shiguang/flux",
+  "version": "0.1.0",
+  "description": "时光 Flux - AI时代的时光机，在任意代码库/任务/历史中自由穿梭",
+  "type": "module",
+  "bin": {
+    "flux": "./dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsc && chmod +x dist/cli.js",
+    "start": "node dist/cli.js"
+  },
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "fast-glob": "^3.3.3",
+    "mammoth": "^1.12.2",
+    "openai": "^4.0.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
