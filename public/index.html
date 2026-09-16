@@ -255,6 +255,44 @@
   .sett-body .sec { font-size: 12px; color: var(--accent); margin: 14px 0 2px; font-weight: 600; }
   .sett-body label.fc { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); margin-top: 12px; }
 
+  /* ---------- 场景工坊 ---------- */
+  .scene-page { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .scene-page h2 { font-size: 20px; margin-bottom: 4px; }
+  .scene-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; }
+  .scene-form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+                padding: 16px 18px; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
+  .scene-form label { font-size: 13px; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px; }
+  .scene-form input[type=text], .scene-form select {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 9px 10px; font-size: 14px; }
+  .scene-form input[type=text]:focus { border-color: var(--accent); outline: none; }
+  .scene-form .row { display: flex; gap: 10px; }
+  .scene-form .row label { flex: 1; }
+  .scene-form .check { flex-direction: row !important; align-items: center; gap: 8px; cursor: pointer; }
+  .scene-form .check input { accent-color: var(--accent); width: 16px; height: 16px; }
+  .scene-run-btn { align-self: flex-start; }
+  .material { max-width: 640px; display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .mat-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .mat-card .mc-label { font-size: 12px; color: var(--accent); letter-spacing: 1px; margin-bottom: 8px;
+                        display: flex; justify-content: space-between; align-items: center; }
+  .mat-card .mc-copy { background: var(--panel-2); border: 1px solid var(--line); color: var(--text-dim);
+                       border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+  .mat-card .mc-copy:hover { color: var(--accent); border-color: var(--accent); }
+  .mat-card .mc-body { font-size: 14px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; }
+  .mat-card.shot { display: flex; gap: 12px; }
+  .mat-card.shot .shot-no { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .mat-card.shot .shot-body { flex: 1; }
+  .mat-card.shot .st-1 { font-size: 14px; }
+  .mat-card.shot .st-2 { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .mat-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mat-tag { background: rgba(240,180,41,.12); color: var(--accent); border-radius: 12px;
+             padding: 3px 10px; font-size: 12px; }
+  .mat-actions { display: flex; gap: 8px; margin-top: 4px; align-items: center; }
+  .mat-actions .small-btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+                            border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
+  .mat-actions .small-btn:hover { border-color: var(--accent); }
+  .mat-actions .save-btn { background: var(--accent); color: #1a1300; font-weight: 700; }
+
   /* 上传文档的附件卡片 */
   .doc-card { align-self: center; width: min(520px, 94%); background: var(--panel);
               border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
@@ -338,7 +376,7 @@
         <button class="group-head"><span class="gicon">🎯</span> 场景工坊 <span class="caret">▸</span></button>
         <div class="group-body">
           <button class="nav-item" data-view="scenario" data-icon="🎯" data-title="面试冲刺" data-desc="抓面试题文档 → 知识库 → 按目标公司定制大纲 → 模拟问答">面试冲刺</button>
-          <button class="nav-item" data-view="scenario" data-icon="📱" data-title="短视频工场" data-desc="抓爆款视频 → 提取文案/分镜/字幕 → 改写 → 生成自己的脚本与口播稿">短视频工场</button>
+          <button class="nav-item" data-view="scenario-video" data-icon="📱" data-title="短视频工场" data-desc="输入主题，产出标题/口播文案/分镜/封面字/话题标签物料包">短视频工场</button>
           <button class="nav-item" data-view="scenario" data-icon="📄" data-title="简历包装" data-desc="抓岗位 JD → 比对简历 → 生成项目串讲稿与卖点">简历包装</button>
           <button class="nav-item" data-view="scenario" data-icon="🧠" data-title="学习路线" data-desc="抓文档/源码 → 入库 → 定制学习路线 + 小测验">学习路线</button>
           <button class="nav-item" data-view="scenario" data-icon="📚" data-title="论文速读" data-desc="抓 PDF → 摘要 → 综述 → 关联已有知识">论文速读</button>
@@ -428,6 +466,37 @@
         <p id="scenDesc">…</p>
         <p style="font-size:13px">这条场景 = 拾光抓素材 → 存入知识库 → 工作流自动加工。<br>即将上线。</p>
         <span class="soon-tag">PLANNED</span>
+      </div>
+    </div>
+    <!-- 场景工坊：短视频工场（第一个真实场景） -->
+    <div class="view" id="view-scenario-video" hidden>
+      <div class="scene-page">
+        <h2>📱 短视频工场</h2>
+        <div class="scene-sub">输入一个主题，时光机产出可直接开拍的物料包：标题 / 口播文案 / 分镜 / 封面字 / 话题标签。</div>
+        <div class="scene-form">
+          <label>主题（必填）
+            <input type="text" id="svTopic" placeholder="如：Java 后端怎么从 15k 涨到 30k">
+          </label>
+          <div class="row">
+            <label>目标时长
+              <select id="svDuration">
+                <option value="15">15 秒</option>
+                <option value="30" selected>30 秒</option>
+                <option value="60">60 秒</option>
+              </select>
+            </label>
+            <label>目标平台
+              <select id="svPlatform">
+                <option value="抖音" selected>抖音</option>
+                <option value="视频号">视频号</option>
+                <option value="B站">B站</option>
+              </select>
+            </label>
+          </div>
+          <label class="check"><input type="checkbox" id="svUseKb" checked> 先从知识库检索参考素材（没存过素材会直接创作）</label>
+          <button class="send-btn scene-run-btn" id="svRunBtn">🎬 生成物料包</button>
+        </div>
+        <div id="svOutput"></div>
       </div>
     </div>
 
@@ -1031,6 +1100,120 @@ async function fetchFromUrlInput() {
   } catch (e) {
     addAssistant("⚠️ " + (e instanceof Error ? e.message : String(e)));
     setBusy(false);
+  }
+}
+
+/* ---------- 场景工坊：短视频工场 ---------- */
+function getSvParams() {
+  const topic = $("svTopic").value.trim();
+  if (!topic) { alert("请先填写主题"); return null; }
+  return { topic, duration: $("svDuration").value, platform: $("svPlatform").value, useKb: $("svUseKb").checked };
+}
+$("svRunBtn").addEventListener("click", runVideoWorkshop);
+$("svTopic").addEventListener("keydown", (e) => { if (e.key === "Enter") runVideoWorkshop(); });
+
+async function runVideoWorkshop() {
+  const params = getSvParams();
+  if (!params) return;
+  const out = $("svOutput");
+  out.innerHTML = '<div class="typing">时光机正在写剧本…</div>';
+  const btn = $("svRunBtn"); btn.disabled = true;
+  try {
+    const resp = await fetch("/scenes/video-workshop/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ params }),
+    });
+    if (!resp.ok) {
+      const e = await resp.json().catch(() => ({}));
+      out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(e.error || ("HTTP " + resp.status))}</div>`;
+      return;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf("\n\n")) >= 0) {
+        const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        const line = chunk.trim();
+        if (!line.startsWith("data: ")) continue;
+        const ev = JSON.parse(line.slice(6));
+        if (ev.type === "scene_result") renderMaterial(ev.data, out);
+        else if (ev.type === "error") out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(ev.text)}</div>`;
+      }
+    }
+  } catch (e) {
+    out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderMaterial(data, out) {
+  window._lastMaterial = { raw: data };
+  const h = escapeHtml;
+  const shots = Array.isArray(data["分镜"]) ? data["分镜"] : [];
+  const tags = Array.isArray(data["话题标签"]) ? data["话题标签"].map(String) : [];
+  let html = '<div class="material">';
+  html += `<div class="mat-card"><div class="mc-label">🎬 标题<button class="mc-copy" onclick="copyField('标题')">复制</button></div><div class="mc-body">${h(String(data["标题"] ?? ""))}</div></div>`;
+  html += `<div class="mat-card"><div class="mc-label">🗣 口播文案<button class="mc-copy" onclick="copyField('口播文案')">复制</button></div><div class="mc-body">${h(String(data["口播文案"] ?? ""))}</div></div>`;
+  if (shots.length) {
+    html += '<div class="mat-card"><div class="mc-label">🎞 分镜</div>';
+    shots.forEach((s, i) => {
+      const shot = (typeof s === "object" && s) ? s : {};
+      html += `<div class="mat-card shot" style="margin-top:8px"><span class="shot-no">#${i + 1}</span><div class="shot-body"><div class="st-1">🎥 ${h(String(shot["镜头"] ?? ""))}</div><div class="st-2">🗣 ${h(String(shot["旁白"] ?? ""))} · ⏱ ${h(String(shot["时长秒"] ?? ""))}s</div></div></div>`;
+    });
+    html += "</div>";
+  }
+  html += `<div class="mat-card"><div class="mc-label">🖼 封面字<button class="mc-copy" onclick="copyField('封面字')">复制</button></div><div class="mc-body">${h(String(data["封面字"] ?? ""))}</div></div>`;
+  html += `<div class="mat-card"><div class="mc-label">🏷 话题标签</div><div class="mat-tags">${tags.map((t) => `<span class="mat-tag">${h(t)}</span>`).join("")}</div></div>`;
+  html += `<div class="mat-actions"><button class="small-btn save-btn" onclick="saveMaterialToKb()">📥 存入知识库</button><span class="hint" id="svSaveHint"></span></div>`;
+  html += "</div>";
+  out.innerHTML = html;
+}
+
+// 复制某个字段（从全局缓存读，避免内联 onclick 拼内容导致引号转义问题）
+function copyField(field) {
+  const m = window._lastMaterial; if (!m) return;
+  const v = m.raw[field];
+  const text = Array.isArray(v) ? v.map(String).join(" ") : String(v ?? "");
+  navigator.clipboard.writeText(text).then(() => {
+    document.querySelectorAll(".mc-copy").forEach((b) => { b.textContent = "已复制 ✓"; });
+    setTimeout(() => document.querySelectorAll(".mc-copy").forEach((b) => { b.textContent = "复制"; }), 1500);
+  }).catch(() => {});
+}
+
+function buildMaterialText(data) {
+  const parts = [];
+  parts.push("【标题】" + (data["标题"] ?? ""));
+  parts.push("【口播文案】\n" + (data["口播文案"] ?? ""));
+  if (Array.isArray(data["分镜"])) {
+    parts.push("【分镜】\n" + data["分镜"].map((s, i) => `#${i + 1} ${(s && s["镜头"]) ?? ""}（旁白：${(s && s["旁白"]) ?? ""} · ${(s && s["时长秒"]) ?? ""}s）`).join("\n"));
+  }
+  parts.push("【封面字】" + (data["封面字"] ?? ""));
+  if (Array.isArray(data["话题标签"])) parts.push("【话题标签】" + data["话题标签"].join(" "));
+  return parts.join("\n\n");
+}
+
+async function saveMaterialToKb() {
+  const m = window._lastMaterial; if (!m) return;
+  const hint = $("svSaveHint");
+  hint.textContent = "存入中…";
+  try {
+    const resp = await fetch("/kb", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: m.raw["标题"] ?? "短视频物料", type: "text", category: "短视频素材", content: buildMaterialText(m.raw) }),
+    });
+    const r = await resp.json();
+    hint.textContent = r.ok ? "✅ 已存入知识库" : ("失败：" + (r.error || ""));
+    if (r.ok && !document.getElementById("view-kb-list").hidden) loadKbList();
+  } catch (e) {
+    hint.textContent = "失败：" + e;
   }
 }
 
