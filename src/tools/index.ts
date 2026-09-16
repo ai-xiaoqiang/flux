@@ -36,4 +36,4 @@ export function builtinRegistry(): ToolRegistry {
 }
 
 export type { FluxTool, ToolContext, ToolRisk } from "./types.js";
-export { ToolRegistry } from "./registry.js";
+export { ToolRegistry, registryFromTools } from "./registry.js";

@@ -31,3 +31,10 @@ export class ToolRegistry {
     return this.all().filter((t) => t.risk === risk);
   }
 }
+
+/** 从工具数组快速建一个注册表（场景等只需挂部分工具时用） */
+export function registryFromTools(tools: FluxTool[]): ToolRegistry {
+  const r = new ToolRegistry();
+  for (const t of tools) r.register(t);
+  return r;
+}
