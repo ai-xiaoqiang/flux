@@ -36,6 +36,15 @@ function json(res: import("node:http").ServerResponse, code: number, obj: unknow
   res.end(JSON.stringify(obj));
 }
 
+/** 取会话快照里最后一条 assistant 文本（场景自检/解析用） */
+function lastAssistantText(session: AgentSession): string {
+  const snapshot = session.exportSnapshot();
+  const last = [...snapshot]
+    .reverse()
+    .find((m) => m.role === "assistant" && typeof m.content === "string" && m.content.trim());
+  return last && typeof last.content === "string" ? last.content : "";
+}
+
 /** 读完整请求体（原始字节） */
 async function readBody(req: import("node:http").IncomingMessage): Promise<Buffer> {
   const chunks: Buffer[] = [];
@@ -388,12 +397,14 @@ async function handle(
           tools,
         });
         await sceneSession.run(scene.buildTaskMessage(params), push);
-        // 取最后一条 assistant 文本 → 解析结构化物料
-        const snapshot = sceneSession.exportSnapshot();
-        const last = [...snapshot]
-          .reverse()
-          .find((m) => m.role === "assistant" && typeof m.content === "string" && m.content.trim());
-        const text = last && typeof last.content === "string" ? last.content : "";
+        // 自检段：若场景声明了检查消息，把第一段输出喂回去做第二段（评审→修订）
+        let text = lastAssistantText(sceneSession);
+        const checkMsg = scene.buildCheckMessage ? scene.buildCheckMessage(text) : null;
+        if (checkMsg) {
+          await sceneSession.run(checkMsg, push);
+          text = lastAssistantText(sceneSession);
+        }
+        // 取最终 assistant 文本 → 解析结构化物料
         const data = text ? scene.parseOutput(text) : null;
         if (data) push({ type: "scene_result", data });
       } catch (err) {

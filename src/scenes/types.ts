@@ -29,6 +29,8 @@ export interface SceneDef {
   buildTaskMessage(params: Record<string, unknown>): string;
   /** 把模型最终输出解析成结构化结果；解析失败返回 null（前端回退纯文本展示） */
   parseOutput(text: string): Record<string, unknown> | null;
+  /** 可选自检：把第一段生成结果喂回去做评审/修订，返回第二段任务的 user 消息；null = 无自检 */
+  buildCheckMessage?(outputText: string): string | null;
   /** 运行时可用的内置工具名（默认 []；短视频工场 = ["search_kb"]） */
   tools?: string[];
   /** 预留挂载点：第三方能力（如视频生成 API），本期为空 */

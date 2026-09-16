@@ -292,6 +292,9 @@
                             border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
   .mat-actions .small-btn:hover { border-color: var(--accent); }
   .mat-actions .save-btn { background: var(--accent); color: #1a1300; font-weight: 700; }
+  .mat-card .check-line { font-size: 13px; line-height: 1.7; }
+  .mat-card .check-line.ok { color: #46d160; }
+  .mat-card .check-line.bad { color: #f85149; }
 
   /* 上传文档的附件卡片 */
   .doc-card { align-self: center; width: min(520px, 94%); background: var(--panel);
@@ -1169,7 +1172,16 @@ function renderMaterial(data, out) {
   const h = escapeHtml;
   const shots = Array.isArray(data["分镜"]) ? data["分镜"] : [];
   const tags = Array.isArray(data["话题标签"]) ? data["话题标签"].map(String) : [];
+  const checks = Array.isArray(data["自检"]) ? data["自检"] : [];
   let html = '<div class="material">';
+  if (checks.length) {
+    html += '<div class="mat-card"><div class="mc-label">🔍 自检结果</div>';
+    checks.forEach((c) => {
+      const ok = c && (c["通过"] === true || c["通过"] === "true");
+      html += `<div class="check-line ${ok ? "ok" : "bad"}">${ok ? "✅" : "❌"} ${h(String(c["要点"] ?? ""))}${c["说明"] ? " —— " + h(String(c["说明"])) : ""}</div>`;
+    });
+    html += "</div>";
+  }
   html += `<div class="mat-card"><div class="mc-label">🎬 标题<button class="mc-copy" onclick="copyField('标题')">复制</button></div><div class="mc-body">${h(String(data["标题"] ?? ""))}</div></div>`;
   html += `<div class="mat-card"><div class="mc-label">🗣 口播文案<button class="mc-copy" onclick="copyField('口播文案')">复制</button></div><div class="mc-body">${h(String(data["口播文案"] ?? ""))}</div></div>`;
   if (shots.length) {
@@ -1207,6 +1219,9 @@ function buildMaterialText(data) {
   }
   parts.push("【封面字】" + (data["封面字"] ?? ""));
   if (Array.isArray(data["话题标签"])) parts.push("【话题标签】" + data["话题标签"].join(" "));
+  if (Array.isArray(data["自检"])) {
+    parts.push("【自检】\n" + data["自检"].map((c) => `${(c && c["通过"] === true) ? "✅" : "❌"} ${(c && c["要点"]) ?? ""}${(c && c["说明"]) ? "：" + c["说明"] : ""}`).join("\n"));
+  }
   return parts.join("\n\n");
 }
 

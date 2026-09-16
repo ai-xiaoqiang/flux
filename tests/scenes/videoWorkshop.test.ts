@@ -12,6 +12,22 @@ const OK_JSON = `好的，这是你的物料包：
 }
 \`\`\``;
 
+const OK_JSON_WITH_CHECK = `这是修订版：
+\`\`\`json
+{
+  "标题": "后端涨薪攻略",
+  "口播文案": "第一句\\n第二句",
+  "分镜": [{ "镜头": "开场特写", "旁白": "第一句", "时长秒": 3 }],
+  "封面字": "三秒抓住人",
+  "话题标签": ["后端", "面试", "涨薪"],
+  "自检": [
+    { "要点": "讲的是谁或什么事", "通过": true, "说明": "主角明确" },
+    { "要点": "发生了什么反常、冲突或意外", "通过": true, "说明": "有反转" },
+    { "要点": "为什么值得继续听", "通过": true, "说明": "有悬念" }
+  ]
+}
+\`\`\``;
+
 describe("videoWorkshopScene", () => {
   it("parseOutput 解析合法 JSON 代码块", () => {
     const out = videoWorkshopScene.parseOutput(OK_JSON);
@@ -55,5 +71,17 @@ describe("videoWorkshopScene", () => {
   });
   it("buildSystemPrompt 非法 template 回退通用", () => {
     expect(videoWorkshopScene.buildSystemPrompt({ template: "nope" })).not.toContain("【本任务使用");
+  });
+  it("buildCheckMessage 包含三点检查判据与第一段原文", () => {
+    const msg = videoWorkshopScene.buildCheckMessage("我的第一版稿子内容");
+    expect(msg).toContain("我的第一版稿子内容");
+    expect(msg).toContain("讲的是谁或什么事");
+    expect(msg).toContain("反常、冲突或意外");
+    expect(msg).toContain("值得继续听");
+  });
+  it("parseOutput 接受带自检字段的物料包", () => {
+    const out = videoWorkshopScene.parseOutput(OK_JSON_WITH_CHECK);
+    expect(out).not.toBeNull();
+    expect(Array.isArray(out?.["自检"])).toBe(true);
   });
 });
