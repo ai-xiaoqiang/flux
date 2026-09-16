@@ -5,12 +5,20 @@
  */
 import { loadConfig, type FluxConfig } from "./config.js";
 import { FluxModel, type FluxMessage } from "./model.js";
-import { builtinRegistry, ToolRegistry, type FluxTool } from "./tools/index.js";
+import { builtinRegistry, ToolRegistry, registryFromTools, type FluxTool } from "./tools/index.js";
 import { buildSystemPrompt } from "./prompt.js";
 import { loadMemory } from "./memory.js";
 
 /** 工具执行前的确认钩子：返回 false 则拒绝执行（谁提供、怎么提示由调用方定） */
 export type ToolConfirm = (tool: FluxTool, args: Record<string, unknown>) => Promise<boolean>;
+
+/** 会话构造选项：场景等可覆盖默认人设与工具集合 */
+export interface SessionOptions {
+  /** 覆盖默认人设（场景用它注入自己的 system prompt） */
+  systemPrompt?: string;
+  /** 覆盖工具集合（场景只需挂自己需要的工具，默认全部内置工具） */
+  tools?: FluxTool[];
+}
 
 /** 单次会话最多来回多少轮，防止大脑陷入死循环。分析类任务常需多轮，故放宽 */
 const MAX_TURNS = 40;
@@ -22,7 +30,8 @@ export type SessionEvent =
   | { type: "tool_result"; name: string; content: string } // 工具执行完
   | { type: "error"; text: string } // 出了错
   | { type: "confirm_request"; id: string; tool: string; risk: string; args: Record<string, unknown> } // 要用户确认
-  | { type: "done" }; // 本轮结束
+  | { type: "done" } // 本轮结束
+  | { type: "scene_result"; data: Record<string, unknown> }; // 场景跑完的结构化结果
 
 /** 事件接收器：谁把事件怎么展示，由调用者决定 */
 export type EventSink = (event: SessionEvent) => void;
@@ -33,14 +42,16 @@ export class AgentSession {
   private registry: ToolRegistry;
   private messages: FluxMessage[] = [];
   private cwd: string;
+  /** 本会话的 system prompt（默认人设或场景注入），reset/恢复时复用 */
+  private systemPrompt: string;
 
-  constructor(private config: FluxConfig) {
+  constructor(private config: FluxConfig, opts: SessionOptions = {}) {
     this.model = new FluxModel(config);
-    this.registry = builtinRegistry();
+    this.registry = opts.tools ? registryFromTools(opts.tools) : builtinRegistry();
     this.cwd = config.cwd;
-    // 起航时翻开"记忆本"：把 ~/.flux/memory.md 里记过的事，拼进航行手册
-    const memory = loadMemory();
-    this.messages.push({ role: "system", content: buildSystemPrompt(memory) });
+    // 起航时翻开"记忆本"：把 ~/.flux/memory.md 里记过的事，拼进航行手册（场景用自己的 prompt）
+    this.systemPrompt = opts.systemPrompt ?? buildSystemPrompt(loadMemory());
+    this.messages = [{ role: "system", content: this.systemPrompt }];
   }
 
   /** 跑完整轮：处理一次用户输入，把过程广播给 emit，直到模型给出最终答案。
@@ -90,8 +101,7 @@ export class AgentSession {
 
   /** 清空对话历史（保留记忆本里已存的长期记忆），回到初始状态（对应 /clear 命令） */
   reset(): void {
-    const memory = loadMemory();
-    this.messages = [{ role: "system", content: buildSystemPrompt(memory) }];
+    this.messages = [{ role: "system", content: this.systemPrompt }];
   }
 
   /** 重载模型：从最新配置重建模型客户端（保存设置后调用，立即生效，不影响对话历史） */
@@ -106,7 +116,6 @@ export class AgentSession {
 
   /** 从磁盘快照恢复上次对话（前面补上当前环境的 system） */
   restoreSnapshot(snapshot: FluxMessage[]): void {
-    const memory = loadMemory();
-    this.messages = [{ role: "system", content: buildSystemPrompt(memory) }, ...snapshot];
+    this.messages = [{ role: "system", content: this.systemPrompt }, ...snapshot];
   }
 }
