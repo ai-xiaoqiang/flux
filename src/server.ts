@@ -13,6 +13,8 @@ import { fileURLToPath } from "node:url";
 import { saveModels, type FluxConfig } from "./config.js";
 import { needsConfirm, APPROVAL_MODES, type ApprovalMode } from "./permission.js";
 import { AgentSession, type SessionEvent } from "./session.js";
+import { sceneRegistry } from "./scenes/index.js";
+import { builtinRegistry, type FluxTool } from "./tools/index.js";
 import { parseDocument } from "./ingest/documentParser.js";
 import { fetchUrl } from "./ingest/fetchUrl.js";
 import { listKb, deleteKb } from "./kb/store.js";
@@ -45,6 +47,8 @@ async function readBody(req: import("node:http").IncomingMessage): Promise<Buffe
 let approvalMode: ApprovalMode = "full";
 let currentId = ""; // 当前会话 id（多会话）
 const pendingConfirms = new Map<string, { resolve: (v: boolean) => void; timer: NodeJS.Timeout }>();
+/** 场景注册表（模块级，单实例服务器够用） */
+const scenes = sceneRegistry();
 
 /** 项目根目录：dist/server.js 的上一级就是 flux 根（public/ 在那里） */
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -336,6 +340,66 @@ async function handle(
       }
       pending.resolve(body.allow === true);
       json(res, 200, { ok: true });
+      return;
+    }
+
+    // 场景工坊：GET /scenes —— 场景列表（含参数 schema，前端据此渲染表单）
+    if (url.pathname === "/scenes" && req.method === "GET") {
+      const items = scenes.all().map((s) => ({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        icon: s.icon,
+        paramsSchema: s.paramsSchema,
+      }));
+      json(res, 200, { ok: true, items });
+      return;
+    }
+    // 场景运行：POST /scenes/:id/run —— SSE 流（同 /chat 风格），跑完附带 scene_result
+    if (url.pathname.startsWith("/scenes/") && req.method === "POST") {
+      const id = url.pathname.slice("/scenes/".length).replace(/\/run$/, "");
+      const scene = scenes.get(id);
+      if (!scene) {
+        json(res, 404, { ok: false, error: "场景不存在" });
+        return;
+      }
+      let params: Record<string, unknown> = {};
+      try {
+        const body = JSON.parse((await readBody(req)).toString("utf-8") || "{}");
+        params = body.params ?? {};
+      } catch {
+        /* 空参数 */
+      }
+      const missing = (scene.paramsSchema.required ?? []).filter((k) => !String(params[k] ?? "").trim());
+      if (missing.length) {
+        json(res, 400, { ok: false, error: `缺少必填参数：${missing.join("、")}` });
+        return;
+      }
+
+      res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
+      const push = (event: SessionEvent) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+      try {
+        // 按场景声明的工具名，从内置注册表取（读类工具，无需审批）
+        const tools = (scene.tools ?? [])
+          .map((name) => builtinRegistry().get(name))
+          .filter((t): t is FluxTool => !!t);
+        const sceneSession = new AgentSession(config, {
+          systemPrompt: scene.buildSystemPrompt(),
+          tools,
+        });
+        await sceneSession.run(scene.buildTaskMessage(params), push);
+        // 取最后一条 assistant 文本 → 解析结构化物料
+        const snapshot = sceneSession.exportSnapshot();
+        const last = [...snapshot]
+          .reverse()
+          .find((m) => m.role === "assistant" && typeof m.content === "string" && m.content.trim());
+        const text = last && typeof last.content === "string" ? last.content : "";
+        const data = text ? scene.parseOutput(text) : null;
+        if (data) push({ type: "scene_result", data });
+      } catch (err) {
+        push({ type: "error", text: String(err) });
+      }
+      res.end();
       return;
     }
 
