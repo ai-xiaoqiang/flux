@@ -5,6 +5,7 @@
  * 可选：先 search_kb 从知识库检索参考素材 → 再创作（参考但不照抄）。
  */
 import type { SceneDef } from "./types.js";
+import { getVideoTemplate } from "./videoTemplates.js";
 
 export const videoWorkshopScene: SceneDef = {
   id: "video-workshop",
@@ -18,12 +19,13 @@ export const videoWorkshopScene: SceneDef = {
       duration: { type: "string", enum: ["15", "30", "60"], description: "目标时长(秒)，默认 30" },
       platform: { type: "string", enum: ["抖音", "视频号", "B站"], description: "目标平台，默认 抖音" },
       useKb: { type: "boolean", description: "是否先从知识库检索参考（默认开启）" },
+      template: { type: "string", enum: ["story", "list", "emotional"], description: "写作模板：story 悬念故事 / list 干货清单 / emotional 情绪共鸣，不填=通用" },
     },
     required: ["topic"],
   },
   tools: ["search_kb"],
-  buildSystemPrompt() {
-    return `你是「时光」的短视频工场：一个爆款短视频物料工厂。
+  buildSystemPrompt(params) {
+    const base = `你是「时光」的短视频工场：一个爆款短视频物料工厂。
 你的任务：根据用户给的主题，产出一份可以直接开拍的短视频物料包。
 
 创作要求：
@@ -45,6 +47,9 @@ export const videoWorkshopScene: SceneDef = {
   "话题标签": ["……", "……"]
 }
 \`\`\``;
+    // 选中的爆款模板：把结构骨架指令追加进人设（不选/非法 id 回退通用）
+    const tpl = getVideoTemplate(params && String(params.template ?? ""));
+    return tpl ? `${base}\n\n${tpl.stylePrompt}` : base;
   },
   buildTaskMessage(params) {
     const topic = String(params.topic ?? "").trim() || "（未提供主题）";

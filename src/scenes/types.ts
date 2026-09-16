@@ -23,8 +23,8 @@ export interface SceneDef {
   icon: string;
   /** 参数表单 schema */
   paramsSchema: SceneParamsSchema;
-  /** 场景人设 + 规则 + 输出格式（不含本次参数，会话启动时固定） */
-  buildSystemPrompt(): string;
+  /** 场景人设 + 规则 + 输出格式（参数可影响 prompt，如写作模板；每个 run 都是新会话，可安全按参数生成） */
+  buildSystemPrompt(params?: Record<string, unknown>): string;
   /** 把用户填的参数拼成这条任务的 user 消息 */
   buildTaskMessage(params: Record<string, unknown>): string;
   /** 把模型最终输出解析成结构化结果；解析失败返回 null（前端回退纯文本展示） */

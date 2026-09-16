@@ -41,4 +41,19 @@ describe("videoWorkshopScene", () => {
   it("tools 只挂 search_kb", () => {
     expect(videoWorkshopScene.tools).toEqual(["search_kb"]);
   });
+  it("buildSystemPrompt 默认不注入写作模板", () => {
+    expect(videoWorkshopScene.buildSystemPrompt()).not.toContain("【本任务使用");
+  });
+  it("buildSystemPrompt 按 template 参数注入对应爆款模板", () => {
+    const story = videoWorkshopScene.buildSystemPrompt({ template: "story" });
+    expect(story).toContain("悬念故事型");
+    expect(story).toContain("反差钩子");
+    const list = videoWorkshopScene.buildSystemPrompt({ template: "list" });
+    expect(list).toContain("干货清单型");
+    const emotional = videoWorkshopScene.buildSystemPrompt({ template: "emotional" });
+    expect(emotional).toContain("情绪共鸣型");
+  });
+  it("buildSystemPrompt 非法 template 回退通用", () => {
+    expect(videoWorkshopScene.buildSystemPrompt({ template: "nope" })).not.toContain("【本任务使用");
+  });
 });

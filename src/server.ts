@@ -384,7 +384,7 @@ async function handle(
           .map((name) => builtinRegistry().get(name))
           .filter((t): t is FluxTool => !!t);
         const sceneSession = new AgentSession(config, {
-          systemPrompt: scene.buildSystemPrompt(),
+          systemPrompt: scene.buildSystemPrompt(params),
           tools,
         });
         await sceneSession.run(scene.buildTaskMessage(params), push);
