@@ -16,7 +16,7 @@ export const videoWorkshopScene: SceneDef = {
     type: "object",
     properties: {
       topic: { type: "string", description: "短视频主题（必填）" },
-      duration: { type: "string", enum: ["15", "30", "60"], description: "目标时长(秒)，默认 30" },
+      duration: { type: "string", enum: ["15", "30", "60", "120", "300"], description: "目标时长(秒)：120=2分钟、300=5分钟；自定义可传任意秒数，默认 30" },
       platform: { type: "string", enum: ["抖音", "视频号", "B站"], description: "目标平台，默认 抖音" },
       useKb: { type: "boolean", description: "是否先从知识库检索参考（默认开启）" },
       template: { type: "string", enum: ["story", "list", "emotional"], description: "写作模板：story 悬念故事 / list 干货清单 / emotional 情绪共鸣，不填=通用" },
@@ -59,7 +59,7 @@ export const videoWorkshopScene: SceneDef = {
     return (
       `主题：${topic}\n` +
       `目标平台：${platform}\n` +
-      `目标时长：${duration} 秒\n` +
+      `目标时长：${formatDuration(duration)}\n` +
       (useKb
         ? "请先用 search_kb 检索素材库，参考其中的相关信息再创作（参考但不要照抄）。检索不到就直接创作。\n"
         : "") +
@@ -117,4 +117,13 @@ ${outputText}
 function extractJsonBlock(text: string): string | null {
   const m = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   return m ? m[1].trim() : null;
+}
+
+/** 把秒数格式化成模型更好理解的时长描述：60 秒 → "60 秒"，120 → "2 分钟（120 秒）"，90 → "90 秒（约 1.5 分钟）" */
+function formatDuration(seconds: string): string {
+  const s = Number.parseInt(seconds, 10);
+  if (!Number.isFinite(s) || s <= 0) return `${seconds} 秒`;
+  if (s % 60 === 0) return `${s / 60} 分钟（${s} 秒）`;
+  if (s >= 60) return `${s} 秒（约 ${(s / 60).toFixed(1)} 分钟）`;
+  return `${s} 秒`;
 }

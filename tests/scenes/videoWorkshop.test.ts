@@ -48,6 +48,18 @@ describe("videoWorkshopScene", () => {
     const noKb = videoWorkshopScene.buildTaskMessage({ topic: "x", useKb: false });
     expect(noKb).not.toContain("search_kb");
   });
+  it("buildTaskMessage 长档位/自定义时长格式化成可读描述", () => {
+    expect(videoWorkshopScene.buildTaskMessage({ topic: "x", duration: "120" })).toContain("2 分钟");
+    expect(videoWorkshopScene.buildTaskMessage({ topic: "x", duration: "300" })).toContain("5 分钟");
+    const custom = videoWorkshopScene.buildTaskMessage({ topic: "x", duration: "90" });
+    expect(custom).toContain("90 秒");
+    expect(custom).toContain("1.5 分钟");
+  });
+  it("paramsSchema 时长预设含 2 分钟/5 分钟档位", () => {
+    const d = videoWorkshopScene.paramsSchema.properties.duration as { enum?: string[] };
+    expect(d.enum).toContain("120");
+    expect(d.enum).toContain("300");
+  });
   it("system prompt 含输出 schema 五个关键字段", () => {
     const sys = videoWorkshopScene.buildSystemPrompt();
     for (const k of ["标题", "口播文案", "分镜", "封面字", "话题标签"]) {
@@ -73,7 +85,7 @@ describe("videoWorkshopScene", () => {
     expect(videoWorkshopScene.buildSystemPrompt({ template: "nope" })).not.toContain("【本任务使用");
   });
   it("buildCheckMessage 包含三点检查判据与第一段原文", () => {
-    const msg = videoWorkshopScene.buildCheckMessage("我的第一版稿子内容");
+    const msg = videoWorkshopScene.buildCheckMessage!("我的第一版稿子内容");
     expect(msg).toContain("我的第一版稿子内容");
     expect(msg).toContain("讲的是谁或什么事");
     expect(msg).toContain("反常、冲突或意外");
