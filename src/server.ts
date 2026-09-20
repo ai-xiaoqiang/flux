@@ -117,10 +117,10 @@ async function handle(
 ): Promise<void> {
     const url = new URL(req.url ?? "/", `http://localhost:${port}`);
 
-    // GET / —— 返回前端页面
+    // GET / —— 返回前端页面（no-store：开发期页面改动频繁，禁止浏览器缓存，保证刷新即最新）
     if (req.method === "GET" && url.pathname === "/") {
       const html = await readFile(join(PROJECT_ROOT, "public", "index.html"), "utf-8");
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
       res.end(html);
       return;
     }

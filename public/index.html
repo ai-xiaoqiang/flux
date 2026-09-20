@@ -265,6 +265,11 @@
   .scene-form input[type=text], .scene-form select {
     background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
     border-radius: 8px; padding: 9px 10px; font-size: 14px; }
+  .scene-form textarea {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 9px 10px; font-size: 13px; resize: vertical;
+    font-family: inherit; line-height: 1.5; }
+  .scene-form textarea:focus { border-color: var(--accent); outline: none; }
   .scene-form input[type=text]:focus { border-color: var(--accent); outline: none; }
   .scene-form .row { display: flex; gap: 10px; }
   .scene-form .row label { flex: 1; }
@@ -479,6 +484,9 @@
         <div class="scene-form">
           <label>主题（必填）
             <input type="text" id="svTopic" placeholder="如：Java 后端怎么从 15k 涨到 30k">
+          </label>
+          <label>已有文案（可选）
+            <textarea id="svInputText" rows="4" placeholder="粘贴你已有的文案/脚本 → 二次改写：先按平台红线审稿，再合规化 + 爆款化改写；留空则直接生成"></textarea>
           </label>
           <div class="row">
             <label>目标时长
@@ -1129,6 +1137,8 @@ function getSvParams() {
     duration = String(Math.round(mins * 60));
   }
   const params = { topic, duration, platform: $("svPlatform").value, useKb: $("svUseKb").checked };
+  const inputText = $("svInputText").value.trim();
+  if (inputText) params.inputText = inputText;
   const template = $("svTemplate").value;
   if (template) params.template = template;
   return params;
@@ -1160,6 +1170,7 @@ async function runVideoWorkshop() {
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buf = "";
+    let textCount = 0;
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -1171,6 +1182,14 @@ async function runVideoWorkshop() {
         if (!line.startsWith("data: ")) continue;
         const ev = JSON.parse(line.slice(6));
         if (ev.type === "scene_result") renderMaterial(ev.data, out);
+        else if (ev.type === "text") {
+          // 两段式：第 1 段初稿、第 2 段自检修订 → 给用户进度反馈，避免以为卡死
+          textCount++;
+          const stage = textCount === 1
+            ? "✍️ 初稿已生成，正在自检评审（红线 + 事实复核）…"
+            : "🔍 评审修订完成，正在收尾…";
+          out.innerHTML = `<div class="typing">${stage}</div>`;
+        }
         else if (ev.type === "error") out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(ev.text)}</div>`;
       }
     }

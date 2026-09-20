@@ -48,6 +48,46 @@ describe("videoWorkshopScene", () => {
     const noKb = videoWorkshopScene.buildTaskMessage({ topic: "x", useKb: false });
     expect(noKb).not.toContain("search_kb");
   });
+  it("buildTaskMessage 二次改写模式：含原文、改写要求与红线审稿提示", () => {
+    const src = "只要每天喝这个，三天根治高血压，加微信领取配方";
+    const msg = videoWorkshopScene.buildTaskMessage({ topic: "健康", inputText: src, platform: "视频号" });
+    expect(msg).toContain("二次改写");
+    expect(msg).toContain(src);
+    expect(msg).toContain("内容红线");
+    expect(msg).toContain("合规化改写");
+    expect(msg).toContain("不伪造");
+    expect(msg).toContain("经得起推敲");
+    expect(msg).toContain("内容级改写");
+    expect(msg).toContain("逐句必须与原文字面不同");
+    expect(msg).toContain("改写示例");
+    expect(msg).toContain("控量");
+    expect(msg).toContain("字数不足同样不合格");
+    expect(msg).toContain("900~1100");
+    expect(msg).toContain("关键事实链");
+    expect(msg).toContain("鸡汤");
+  });
+  it("buildTaskMessage 无 inputText 时为生成模式，不含改写指令", () => {
+    const msg = videoWorkshopScene.buildTaskMessage({ topic: "x" });
+    expect(msg).not.toContain("二次改写");
+  });
+  it("buildSystemPrompt 注入内容红线（通用 + 所选平台特色）", () => {
+    const douyin = videoWorkshopScene.buildSystemPrompt({ platform: "抖音" });
+    expect(douyin).toContain("内容红线");
+    expect(douyin).toContain("资质认证"); // 抖音财经特色
+    expect(douyin).toContain("真实性");   // 不伪造/经得起推敲的创作纪律
+    const bili = videoWorkshopScene.buildSystemPrompt({ platform: "B站" });
+    expect(bili).toContain("站外导流");   // B站特色
+    expect(bili).toContain("绝对化用语"); // 通用
+  });
+  it("buildCheckMessage 含平台红线合规检查点", () => {
+    const msg = videoWorkshopScene.buildCheckMessage!("x");
+    expect(msg).toContain("平台红线合规");
+    expect(msg).toContain("事实真实性");
+    expect(msg).toContain("某人说");
+    expect(msg).toContain("字数明显少于档位");
+    expect(msg).toContain("关键事实链");
+    expect(msg).toContain("改写度");
+  });
   it("buildTaskMessage 长档位/自定义时长格式化成可读描述", () => {
     expect(videoWorkshopScene.buildTaskMessage({ topic: "x", duration: "120" })).toContain("2 分钟");
     expect(videoWorkshopScene.buildTaskMessage({ topic: "x", duration: "300" })).toContain("5 分钟");
