@@ -14,3 +14,7 @@ demo.txt
 
 # 系统
 .DS_Store
+
+# IDE
+.idea/
+.vscode/
