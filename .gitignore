@@ -18,3 +18,8 @@ demo.txt
 # IDE
 .idea/
 .vscode/
+
+# 桌面版：打包前的复制产物与安装包（由 desktop/scripts/prepare.js 生成，不入库）
+desktop/dist/
+desktop/public/
+desktop/release/

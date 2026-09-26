@@ -1,0 +1,40 @@
+{
+  "name": "flux-desktop",
+  "version": "0.1.0",
+  "description": "时光 Flux 桌面版（Electron 壳）",
+  "main": "main.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/prepare.js && electron .",
+    "dist": "node scripts/prepare.js && electron-builder --mac"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "fast-glob": "^3.3.3",
+    "mammoth": "^1.12.2",
+    "openai": "^4.0.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.shiguang.flux",
+    "productName": "时光 Flux",
+    "files": [
+      "main.js",
+      "dist/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.productivity"
+    },
+    "directories": {
+      "output": "release"
+    }
+  }
+}
