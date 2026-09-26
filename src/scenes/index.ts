@@ -5,10 +5,12 @@
  */
 import { SceneRegistry } from "./registry.js";
 import { videoWorkshopScene } from "./videoWorkshop.js";
+import { xianyuListingScene } from "./xianyuListing.js";
 
 export function sceneRegistry(): SceneRegistry {
   const r = new SceneRegistry();
   r.register(videoWorkshopScene);
+  r.register(xianyuListingScene);
   return r;
 }
 

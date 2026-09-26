@@ -66,6 +66,13 @@ describe("videoWorkshopScene", () => {
     expect(msg).toContain("关键事实链");
     expect(msg).toContain("鸡汤");
   });
+  it("buildTaskMessage 透传角度/矛盾点（生成与改写模式都带）", () => {
+    const gen = videoWorkshopScene.buildTaskMessage({ topic: "x", angle: "中秋节团圆 vs 农村勾心斗角" });
+    expect(gen).toContain("创作角度/矛盾点");
+    expect(gen).toContain("中秋节团圆 vs 农村勾心斗角");
+    const rewrite = videoWorkshopScene.buildTaskMessage({ topic: "x", angle: "想回又不想回", inputText: "已有文案" });
+    expect(rewrite).toContain("想回又不想回");
+  });
   it("buildTaskMessage 无 inputText 时为生成模式，不含改写指令", () => {
     const msg = videoWorkshopScene.buildTaskMessage({ topic: "x" });
     expect(msg).not.toContain("二次改写");

@@ -284,6 +284,7 @@
                        border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
   .mat-card .mc-copy:hover { color: var(--accent); border-color: var(--accent); }
   .mat-card .mc-body { font-size: 14px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; }
+  .mat-card textarea.full-text { width: 100%; box-sizing: border-box; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 10px; font-size: 13px; line-height: 1.6; font-family: inherit; resize: vertical; }
   .mat-card.shot { display: flex; gap: 12px; }
   .mat-card.shot .shot-no { color: var(--accent); font-weight: 700; flex-shrink: 0; }
   .mat-card.shot .shot-body { flex: 1; }
@@ -385,6 +386,7 @@
         <div class="group-body">
           <button class="nav-item" data-view="scenario" data-icon="🎯" data-title="面试冲刺" data-desc="抓面试题文档 → 知识库 → 按目标公司定制大纲 → 模拟问答">面试冲刺</button>
           <button class="nav-item" data-view="scenario-video" data-icon="📱" data-title="短视频工场" data-desc="输入主题，产出标题/口播文案/分镜/封面字/话题标签物料包">短视频工场</button>
+          <button class="nav-item" data-view="scenario-xianyu" data-icon="🐟" data-title="咸鱼爆款文案" data-desc="输入商品信息，产出标题/转卖原因/产品卖点/款式/购买须知闲鱼文案">咸鱼爆款文案</button>
           <button class="nav-item" data-view="scenario" data-icon="📄" data-title="简历包装" data-desc="抓岗位 JD → 比对简历 → 生成项目串讲稿与卖点">简历包装</button>
           <button class="nav-item" data-view="scenario" data-icon="🧠" data-title="学习路线" data-desc="抓文档/源码 → 入库 → 定制学习路线 + 小测验">学习路线</button>
           <button class="nav-item" data-view="scenario" data-icon="📚" data-title="论文速读" data-desc="抓 PDF → 摘要 → 综述 → 关联已有知识">论文速读</button>
@@ -485,6 +487,9 @@
           <label>主题（必填）
             <input type="text" id="svTopic" placeholder="如：Java 后端怎么从 15k 涨到 30k">
           </label>
+          <label>角度 / 矛盾点（可选）
+            <input type="text" id="svAngle" placeholder="如：马上中秋节了，本应团圆，但农村亲戚勾心斗角，想回又不想回">
+          </label>
           <label>已有文案（可选）
             <textarea id="svInputText" rows="4" placeholder="粘贴你已有的文案/脚本 → 二次改写：先按平台红线审稿，再合规化 + 爆款化改写；留空则直接生成"></textarea>
           </label>
@@ -520,6 +525,51 @@
           <button class="send-btn scene-run-btn" id="svRunBtn">🎬 生成物料包</button>
         </div>
         <div id="svOutput"></div>
+      </div>
+    </div>
+
+    <div class="view" id="view-scenario-xianyu" hidden>
+      <div class="scene-page">
+        <h2>🐟 咸鱼爆款文案</h2>
+        <div class="scene-sub">输入商品信息，产出可直接发布的闲鱼文案：标题 / 转卖原因 / 产品卖点 / 款式 / 购买须知（内置闲鱼红线自检）。</div>
+        <div class="scene-form">
+          <label>商品名称（必填）
+            <input type="text" id="xaProduct" placeholder="如：iPhone 14 Pro / 戴森吸尘器 V8">
+          </label>
+          <label>款式 / 规格（可选）
+            <input type="text" id="xaSpec" placeholder="如：256G 远峰蓝 / 日版 标配">
+          </label>
+          <label>多款式与价格（可选，每行一个款式）
+            <textarea id="xaVariants" rows="3" placeholder="黑色 128G | 1999&#10;白色 256G | 2299&#10;（填了它，款式就按多款输出；不填用上面的单款式）"></textarea>
+          </label>
+          <div class="row">
+            <label>入手价（可选）
+              <input type="text" id="xaOriginalPrice" placeholder="如 8999">
+            </label>
+            <label>转让价（可选）
+              <input type="text" id="xaPrice" placeholder="想挂的价格，如 5500">
+            </label>
+          </div>
+          <label>成色
+            <select id="xaCondition">
+              <option value="全新">全新</option>
+              <option value="99新">99新</option>
+              <option value="95新" selected>95新</option>
+              <option value="9成新">9成新</option>
+              <option value="8成新">8成新</option>
+              <option value="有瑕疵">有瑕疵</option>
+            </select>
+          </label>
+          <label>转卖原因（可选，填真实原因更可信）
+            <input type="text" id="xaReason" placeholder="如：换了新款，闲置吃灰">
+          </label>
+          <label>产品卖点（可选，逗号分隔）
+            <input type="text" id="xaSellingPoints" placeholder="如：电池健康92,国行双卡,无拆无修">
+          </label>
+          <label class="check"><input type="checkbox" id="xaUseKb" checked> 先从知识库检索参考素材（没存过素材会直接创作）</label>
+          <button class="send-btn scene-run-btn" id="xaRunBtn">🐟 生成爆款文案</button>
+        </div>
+        <div id="xaOutput"></div>
       </div>
     </div>
 
@@ -1137,6 +1187,8 @@ function getSvParams() {
     duration = String(Math.round(mins * 60));
   }
   const params = { topic, duration, platform: $("svPlatform").value, useKb: $("svUseKb").checked };
+  const angle = $("svAngle").value.trim();
+  if (angle) params.angle = angle;
   const inputText = $("svInputText").value.trim();
   if (inputText) params.inputText = inputText;
   const template = $("svTemplate").value;
@@ -1274,6 +1326,156 @@ async function saveMaterialToKb() {
   } catch (e) {
     hint.textContent = "失败：" + e;
   }
+}
+
+/* ---------- 场景工坊：咸鱼爆款文案 ---------- */
+function getXaParams() {
+  const product = $("xaProduct").value.trim();
+  if (!product) { alert("请先填写商品名称"); return null; }
+  const params = { product, condition: $("xaCondition").value, useKb: $("xaUseKb").checked };
+  for (const [k, id] of [["spec", "xaSpec"], ["originalPrice", "xaOriginalPrice"], ["price", "xaPrice"], ["reason", "xaReason"], ["sellingPoints", "xaSellingPoints"]]) {
+    const v = $(id).value.trim();
+    if (v) params[k] = v;
+  }
+  const variants = $("xaVariants").value.trim();
+  if (variants) params.variants = variants;
+  return params;
+}
+$("xaRunBtn").addEventListener("click", runXianyuWorkshop);
+$("xaProduct").addEventListener("keydown", (e) => { if (e.key === "Enter") runXianyuWorkshop(); });
+
+async function runXianyuWorkshop() {
+  const params = getXaParams();
+  if (!params) return;
+  const out = $("xaOutput");
+  out.innerHTML = '<div class="typing">🐟 时光机正在写文案…</div>';
+  const btn = $("xaRunBtn"); btn.disabled = true;
+  try {
+    const resp = await fetch("/scenes/xianyu-listing/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ params }),
+    });
+    if (!resp.ok) {
+      const e = await resp.json().catch(() => ({}));
+      out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(e.error || ("HTTP " + resp.status))}</div>`;
+      return;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let textCount = 0;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf("\n\n")) >= 0) {
+        const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        const line = chunk.trim();
+        if (!line.startsWith("data: ")) continue;
+        const ev = JSON.parse(line.slice(6));
+        if (ev.type === "scene_result") renderXianyuMaterial(ev.data, out);
+        else if (ev.type === "text") {
+          // 两段式：第 1 段初稿、第 2 段自检修订 → 进度反馈
+          textCount++;
+          const stage = textCount === 1
+            ? "✍️ 初稿已生成，正在自检评审（红线 + 真实性复核）…"
+            : "🔍 评审修订完成，正在收尾…";
+          out.innerHTML = `<div class="typing">${stage}</div>`;
+        }
+        else if (ev.type === "error") out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(ev.text)}</div>`;
+      }
+    }
+  } catch (e) {
+    out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderXianyuMaterial(data, out) {
+  window._lastXianyuMaterial = { raw: data };
+  const h = escapeHtml;
+  const points = Array.isArray(data["产品卖点"]) ? data["产品卖点"] : [];
+  const checks = Array.isArray(data["自检"]) ? data["自检"] : [];
+  let html = '<div class="material">';
+  if (checks.length) {
+    html += '<div class="mat-card"><div class="mc-label">🔍 自检结果</div>';
+    checks.forEach((c) => {
+      const ok = c && (c["通过"] === true || c["通过"] === "true");
+      html += `<div class="check-line ${ok ? "ok" : "bad"}">${ok ? "✅" : "❌"} ${h(String(c["要点"] ?? ""))}${c["说明"] ? " —— " + h(String(c["说明"])) : ""}</div>`;
+    });
+    html += "</div>";
+  }
+  html += `<div class="mat-card"><div class="mc-label">📋 完整文案（可直接复制发布）<button class="mc-copy" onclick="copyXianyuAll()">复制全部</button></div><textarea readonly class="full-text" rows="12" id="xaFullText">${h(buildXianyuText(data))}</textarea></div>`;
+  html += `<div class="mat-card"><div class="mc-label">🔖 标题<button class="mc-copy" onclick="copyXianyuField('标题')">复制</button></div><div class="mc-body">${h(String(data["标题"] ?? ""))}</div></div>`;
+  html += `<div class="mat-card"><div class="mc-label">🗣 转卖原因<button class="mc-copy" onclick="copyXianyuField('转卖原因')">复制</button></div><div class="mc-body">${h(String(data["转卖原因"] ?? ""))}</div></div>`;
+  html += '<div class="mat-card"><div class="mc-label">✨ 产品卖点</div>';
+  points.forEach((p) => { html += `<div class="mc-body" style="margin-top:4px">· ${h(String(p))}</div>`; });
+  html += "</div>";
+  html += `<div class="mat-card"><div class="mc-label">📦 款式<button class="mc-copy" onclick="copyXianyuField('款式')">复制</button></div>`;
+  if (Array.isArray(data["款式"])) {
+    data["款式"].forEach((s) => {
+      const o = (typeof s === "object" && s) ? s : {};
+      html += `<div class="mc-body" style="margin-top:4px">· ${h(String(o["款"] ?? ""))}${o["价格"] != null ? "　💰 " + h(String(o["价格"])) : ""}</div>`;
+    });
+  } else {
+    html += `<div class="mc-body">${h(String(data["款式"] ?? ""))}</div>`;
+  }
+  html += "</div>";
+  html += `<div class="mat-card"><div class="mc-label">📝 购买须知<button class="mc-copy" onclick="copyXianyuField('购买须知')">复制</button></div><div class="mc-body">${h(String(data["购买须知"] ?? ""))}</div></div>`;
+  html += "</div>";
+  out.innerHTML = html;
+}
+
+function copyXianyuField(field) {
+  const m = window._lastXianyuMaterial; if (!m) return;
+  const v = m.raw[field];
+  let text;
+  if (Array.isArray(v)) {
+    text = v.map((x) => {
+      if (x && typeof x === "object") return (x["款"] ?? "") + (x["价格"] != null ? " " + x["价格"] : "");
+      return String(x);
+    }).join("\n");
+  } else {
+    text = String(v ?? "");
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    document.querySelectorAll(".mc-copy").forEach((b) => { b.textContent = "已复制 ✓"; });
+    setTimeout(() => document.querySelectorAll(".mc-copy").forEach((b) => { b.textContent = "复制"; }), 1500);
+  }).catch(() => {});
+}
+
+// 把物料包排成可直接发布的纯文本
+function buildXianyuText(data) {
+  const parts = [];
+  parts.push("【标题】" + (data["标题"] ?? ""));
+  parts.push("【转卖原因】" + (data["转卖原因"] ?? ""));
+  const points = Array.isArray(data["产品卖点"]) ? data["产品卖点"] : [];
+  if (points.length) parts.push("【产品卖点】\n" + points.map((p) => "- " + p).join("\n"));
+  const spec = data["款式"];
+  if (Array.isArray(spec)) {
+    const rows = spec.map((s) => {
+      const o = (typeof s === "object" && s) ? s : {};
+      return "- " + (o["款"] ?? "") + (o["价格"] != null ? "（" + o["价格"] + "元）" : "");
+    });
+    parts.push("【款式】\n" + rows.join("\n"));
+  } else {
+    parts.push("【款式】" + String(spec ?? ""));
+  }
+  parts.push("【购买须知】\n" + (data["购买须知"] ?? ""));
+  return parts.join("\n\n");
+}
+
+// 复制完整文案（排版好的全文）
+function copyXianyuAll() {
+  const m = window._lastXianyuMaterial; if (!m) return;
+  const text = buildXianyuText(m.raw);
+  navigator.clipboard.writeText(text).then(() => {
+    document.querySelectorAll(".mc-copy").forEach((b) => { b.textContent = "已复制 ✓"; });
+    setTimeout(() => document.querySelectorAll(".mc-copy").forEach((b) => { b.textContent = "复制"; }), 1500);
+  }).catch(() => {});
 }
 
 /* ---------- 快捷按钮 & 输入 ---------- */

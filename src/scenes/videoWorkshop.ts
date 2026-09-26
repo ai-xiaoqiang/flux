@@ -17,6 +17,7 @@ export const videoWorkshopScene: SceneDef = {
     type: "object",
     properties: {
       topic: { type: "string", description: "短视频主题（必填）" },
+      angle: { type: "string", description: "角度/矛盾点（可选）：把具体的冲突、反差、纠结写进来，内容围绕它展开" },
       inputText: { type: "string", description: "已有文案（可选）：填写后改为「二次改写」模式，按平台红线合规 + 爆款逻辑改写" },
       duration: { type: "string", enum: ["15", "30", "60", "120", "300"], description: "目标时长(秒)：120=2分钟、300=5分钟；自定义可传任意秒数，默认 30" },
       platform: { type: "string", enum: ["抖音", "视频号", "B站"], description: "目标平台，默认 抖音" },
@@ -63,12 +64,16 @@ export const videoWorkshopScene: SceneDef = {
   },
   buildTaskMessage(params) {
     const topic = String(params.topic ?? "").trim() || "（未提供主题）";
+    const angle = String(params.angle ?? "").trim();
     const inputText = String(params.inputText ?? "").trim();
     const duration = String(params.duration ?? "30");
     const platform = String(params.platform ?? "抖音");
     const useKb = params.useKb !== false;
     const kbHint = useKb
       ? "请先用 search_kb 检索素材库，参考其中的相关信息再创作（参考但不要照抄）。检索不到就直接创作。\n"
+      : "";
+    const angleHint = angle
+      ? `创作角度/矛盾点（必须围绕它展开，钩子/冲突/结尾共鸣都要扣住）：${angle}\n`
       : "";
 
     // 二次改写模式：给了已有文案 → 先对照红线审稿，再合规化 + 爆款化改写，不是从零创作
@@ -77,6 +82,7 @@ export const videoWorkshopScene: SceneDef = {
         `主题：${topic}\n` +
         `目标平台：${platform}\n` +
         `目标时长：${formatDuration(duration)}\n` +
+        angleHint +
         `任务：对下面的「已有文案」做二次改写。\n\n` +
         `【已有文案】\n${inputText}\n\n` +
         `【改写要求】\n` +
@@ -96,6 +102,7 @@ export const videoWorkshopScene: SceneDef = {
       `主题：${topic}\n` +
       `目标平台：${platform}\n` +
       `目标时长：${formatDuration(duration)}\n` +
+      angleHint +
       kbHint +
       "请按输出格式产出这份短视频物料包。"
     );
