@@ -56,4 +56,30 @@ describe("AgentSession 场景化覆盖", () => {
     const [, tools] = chatCallsOf(s);
     expect((tools as { name: string }[]).map((t) => t.name)).toEqual(["fake_read"]);
   });
+  it("setKnowledgeMode(kb_only)：system 注入「仅查询知识库」规则", async () => {
+    const s = new AgentSession(fakeConfig);
+    s.setKnowledgeMode("kb_only");
+    await s.run("hi", () => {});
+    const [messages] = chatCallsOf(s);
+    const sys = messages[0] as { content: string };
+    expect(sys.content).toContain("仅查询知识库");
+    expect(sys.content).toContain("不要用自己的知识编造或补充");
+  });
+  it("setKnowledgeMode(auto)：system 注入「知识库优先」规则", async () => {
+    const s = new AgentSession(fakeConfig);
+    s.setKnowledgeMode("auto");
+    await s.run("hi", () => {});
+    const [messages] = chatCallsOf(s);
+    const sys = messages[0] as { content: string };
+    expect(sys.content).toContain("知识库优先");
+    expect(sys.content).toContain("以知识库内容为主");
+  });
+  it("restoreSnapshot：system 用当前模式的 systemPrompt", async () => {
+    const s = new AgentSession(fakeConfig);
+    s.setKnowledgeMode("kb_only");
+    s.restoreSnapshot([{ role: "user", content: "hi" }]);
+    await s.run("hi", () => {});
+    const [messages] = chatCallsOf(s);
+    expect((messages[0] as { content: string }).content).toContain("仅查询知识库");
+  });
 });

@@ -185,10 +185,12 @@ async function handle(
     // 支持两种入参：GET ?text=… （URL，小文本）；POST {text} （body，支持长文本/文档内容）
     if (url.pathname === "/chat" && (req.method === "GET" || req.method === "POST")) {
       let text = url.searchParams.get("text") ?? "";
+      let mode: string | undefined = url.searchParams.get("mode") ?? undefined;
       if (req.method === "POST") {
         try {
           const body = JSON.parse((await readBody(req)).toString("utf-8") || "{}");
           text = body.text ?? "";
+          mode = body.mode ?? undefined;
         } catch {
           res.writeHead(400);
           res.end("Bad Request: body must be JSON {text}");
@@ -225,6 +227,8 @@ async function handle(
         });
       };
       try {
+        // 知识库模式：auto=知识库优先+模型兜底（默认）；kb_only=仅查询知识库
+        session.setKnowledgeMode(mode === "kb_only" ? "kb_only" : "auto");
         await session.run(text, push, confirm);
         // 本轮跑完，存进"当前会话"文件（多会话；自动生成标题）
         const msgs = session.exportSnapshot();

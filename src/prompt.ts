@@ -26,6 +26,17 @@ ${memory}` : ""}
 `.trim();
 }
 
+/** 知识库模式：auto = 知识库优先 + 大模型兜底；kb_only = 仅查询知识库 */
+export type KnowledgeMode = "auto" | "kb_only";
+
+/** 知识库模式规则：按模式追加到 system prompt 的知识检索策略 */
+export function buildKbModeRule(mode?: KnowledgeMode): string {
+  if (mode === "kb_only") {
+    return `\n\n【知识库模式：仅查询知识库】\n- 只允许使用 search_kb 工具检索知识库来回答问题，不要用其它知识。\n- 检索到相关内容：基于知识库内容回答。\n- 没有检索到相关内容：明确告诉用户「知识库里没有相关内容」，不要用自己的知识编造或补充。`;
+  }
+  return `\n\n【知识库模式：知识库优先】\n- 回答前先尝试用 search_kb 检索知识库（问题明显与知识库无关时可跳过）。\n- 检索到相关内容：以知识库内容为主，用你自己的知识补充细节，综合给出总结回答。\n- 没有检索到相关内容：直接以自己的知识回答，不必强行套知识库。`;
+}
+
 /** 组装发给大脑的完整消息。M1 起会携带工具清单与对话历史 */
 export function buildMessages(input: string): Array<{ role: "system" | "user" | "assistant"; content: string }> {
   return [

@@ -6,7 +6,7 @@
 import { loadConfig, type FluxConfig } from "./config.js";
 import { FluxModel, type FluxMessage } from "./model.js";
 import { builtinRegistry, ToolRegistry, registryFromTools, type FluxTool } from "./tools/index.js";
-import { buildSystemPrompt } from "./prompt.js";
+import { buildSystemPrompt, buildKbModeRule, type KnowledgeMode } from "./prompt.js";
 import { loadMemory } from "./memory.js";
 
 /** 工具执行前的确认钩子：返回 false 则拒绝执行（谁提供、怎么提示由调用方定） */
@@ -46,6 +46,8 @@ export class AgentSession {
   private cwd: string;
   /** 本会话的 system prompt（默认人设或场景注入），reset/恢复时复用 */
   private systemPrompt: string;
+  /** 未拼知识库模式规则的基础人设（setKnowledgeMode 时在其上追加/重建） */
+  private baseSystemPrompt: string;
   /** 本会话限定的知识库分类（场景用，传给 search_kb 做过滤） */
   private kbCategories?: string[];
 
@@ -55,8 +57,15 @@ export class AgentSession {
     this.cwd = config.cwd;
     this.kbCategories = opts.kbCategories;
     // 起航时翻开"记忆本"：把 ~/.flux/memory.md 里记过的事，拼进航行手册（场景用自己的 prompt）
-    this.systemPrompt = opts.systemPrompt ?? buildSystemPrompt(loadMemory());
+    this.baseSystemPrompt = opts.systemPrompt ?? buildSystemPrompt(loadMemory());
+    this.systemPrompt = this.baseSystemPrompt;
     this.messages = [{ role: "system", content: this.systemPrompt }];
+  }
+
+  /** 切换知识库模式：重建 system 消息（auto=知识库优先+模型兜底；kb_only=仅查询知识库）。场景会话勿调。 */
+  setKnowledgeMode(mode?: KnowledgeMode): void {
+    this.systemPrompt = this.baseSystemPrompt + buildKbModeRule(mode);
+    this.messages[0] = { role: "system", content: this.systemPrompt };
   }
 
   /** 跑完整轮：处理一次用户输入，把过程广播给 emit，直到模型给出最终答案。

@@ -609,6 +609,9 @@
         <button class="chip" data-tpl="记住我，我叫 ">🧠 记住我</button>
       </div>
       <div class="bottom">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);padding:0 4px 6px;cursor:pointer" title="勾选：只从知识库回答，没有就明说；不勾选：先查知识库，没有则以大模型知识回答">
+          <input type="checkbox" id="kbOnly"> 🔍 仅查询知识库
+        </label>
         <div class="input-wrap">
           <input type="text" id="input" placeholder="让时光机帮你干活…（Enter 发送）" autofocus>
           <input type="file" id="fileInput" accept=".pdf,.docx,.html,.htm,.md,.txt" hidden>
@@ -907,6 +910,13 @@ async function send(text, display) {
   await sendRaw(text);
 }
 
+// 知识库模式：勾选=仅查询知识库；不勾选=知识库优先+大模型兜底（默认）。localStorage 记忆
+(function initKbMode() {
+  const cb = $("kbOnly");
+  if (localStorage.getItem("flux_kb_only") === "1") cb.checked = true;
+  cb.addEventListener("change", () => localStorage.setItem("flux_kb_only", cb.checked ? "1" : "0"));
+})();
+
 // 真正发请求的引擎（不走禁用锁，程序也能调，如上传文档后）
 async function sendRaw(text) {
   curAct = null; curActCount = 0; // 新一轮任务，活动面板重置
@@ -916,7 +926,7 @@ async function sendRaw(text) {
     const resp = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, mode: $("kbOnly").checked ? "kb_only" : "auto" }),
     });
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
