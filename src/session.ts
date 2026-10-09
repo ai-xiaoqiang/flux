@@ -50,6 +50,8 @@ export class AgentSession {
   private baseSystemPrompt: string;
   /** 本会话限定的知识库分类（场景用，传给 search_kb 做过滤） */
   private kbCategories?: string[];
+  /** 知识库模式（聊天用）：auto=知识库优先+模型兜底；kb_only=仅查询知识库 */
+  private kbMode: KnowledgeMode = "auto";
 
   constructor(private config: FluxConfig, opts: SessionOptions = {}) {
     this.model = new FluxModel(config);
@@ -64,7 +66,8 @@ export class AgentSession {
 
   /** 切换知识库模式：重建 system 消息（auto=知识库优先+模型兜底；kb_only=仅查询知识库）。场景会话勿调。 */
   setKnowledgeMode(mode?: KnowledgeMode): void {
-    this.systemPrompt = this.baseSystemPrompt + buildKbModeRule(mode);
+    this.kbMode = mode ?? "auto";
+    this.systemPrompt = this.baseSystemPrompt + buildKbModeRule(this.kbMode);
     this.messages[0] = { role: "system", content: this.systemPrompt };
   }
 
@@ -101,7 +104,12 @@ export class AgentSession {
         } else if (tool.risk !== "read" && confirm && !(await confirm(tool, call.args))) {
           result = `用户拒绝了执行「${tool.name}」。如确有必要，请先征求用户同意再试。`; // 审批不过：不执行，如实告诉大脑
         } else {
-          result = await tool.execute(call.args, { cwd: this.cwd, model: this.model, kbCategories: this.kbCategories });
+          result = await tool.execute(call.args, {
+            cwd: this.cwd,
+            model: this.model,
+            kbCategories: this.kbCategories,
+            kbMode: this.kbMode,
+          });
         }
         emit({ type: "tool_result", name: call.name, content: result });
         // 工具结果作为一条 role=tool 的消息回填，下一轮大脑就"看到"了

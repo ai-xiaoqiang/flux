@@ -72,7 +72,9 @@ describe("AgentSession 场景化覆盖", () => {
     const [messages] = chatCallsOf(s);
     const sys = messages[0] as { content: string };
     expect(sys.content).toContain("知识库优先");
-    expect(sys.content).toContain("以知识库内容为主");
+    expect(sys.content).toContain("绝不能替代你的回答");
+    expect(sys.content).toContain("必须直接以自己的知识回答");
+    expect(sys.content).toContain("不叫编造");
   });
   it("restoreSnapshot：system 用当前模式的 systemPrompt", async () => {
     const s = new AgentSession(fakeConfig);
