@@ -395,6 +395,7 @@ async function handle(
         const sceneSession = new AgentSession(config, {
           systemPrompt: scene.buildSystemPrompt(params),
           tools,
+          kbCategories: scene.kbCategories, // 分类联动：场景声明可引用的知识库分类，search_kb 只在这些分类里召回
         });
         await sceneSession.run(scene.buildTaskMessage(params), push);
         // 自检段：若场景声明了检查消息，把第一段输出喂回去做第二段（评审→修订）
@@ -407,6 +408,11 @@ async function handle(
         // 取最终 assistant 文本 → 解析结构化物料
         const data = text ? scene.parseOutput(text) : null;
         if (data) push({ type: "scene_result", data });
+        else if (text)
+          push({
+            type: "error",
+            text: `生成结果未能解析为标准物料包（模型输出可能被截断或 JSON 格式跑偏）。已保留模型原始输出，可直接复制，或点「重试」换更短的时长档位再生成：\n\n${text}`,
+          });
       } catch (err) {
         push({ type: "error", text: String(err) });
       }

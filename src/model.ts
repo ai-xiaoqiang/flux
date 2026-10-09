@@ -48,11 +48,14 @@ export class FluxModel {
   /** 向量化：把若干段文字转成向量（知识库检索用），走独立的 embedding 端点 */
   async embed(texts: string[]): Promise<number[][]> {
     if (texts.length === 0) return [];
+    // 分批调用：百炼 text-embedding-v3 单请求最多 10 条（>10 报 400 batch size invalid）；
+    // 10 也远低于 OpenAI 兼容端的常见上限，对各家都安全。
+    const BATCH = 10;
     const batch: string[] = [];
     const result: number[][] = [];
     for (const t of texts) {
       batch.push(t);
-      if (batch.length >= 20) {
+      if (batch.length >= BATCH) {
         result.push(...(await this.embedOnce(batch)));
         batch.length = 0;
       }

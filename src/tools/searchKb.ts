@@ -24,10 +24,14 @@ export const searchKbTool: FluxTool = {
     const query = String(args.query ?? "").trim();
     if (!query) return "错误：缺少 query 参数";
     try {
-      const hits = await searchKb(ctx.model, query, Number(args.k ?? 4));
-      if (hits.length === 0) return "知识库里没检索到相关内容（可能还没存过文档，或没相关性）。";
+      const hits = await searchKb(ctx.model, query, Number(args.k ?? 4), ctx.kbCategories);
+      const scope = ctx.kbCategories && ctx.kbCategories.length ? `（仅检索「${ctx.kbCategories.join("、")}」分类）` : "";
+      if (hits.length === 0)
+        return ctx.kbCategories && ctx.kbCategories.length
+          ? `知识库${scope}里没检索到相关内容。检索不到就直接创作，不要硬编造素材。`
+          : "知识库里没检索到相关内容（可能还没存过文档，或没相关性）。";
       return (
-        `知识库命中 ${hits.length} 段（按相关度排序）：\n\n` +
+        `知识库命中 ${hits.length} 段${scope}（按相关度排序）：\n\n` +
         hits
           .map((h, i) => `【${i + 1}】《${h.title}》(${h.category}) 相关度 ${(h.score * 100).toFixed(0)}%\n${h.text.slice(0, 600)}`)
           .join("\n\n")

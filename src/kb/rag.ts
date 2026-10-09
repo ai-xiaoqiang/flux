@@ -32,11 +32,18 @@ export interface KbHit {
   text: string;
 }
 
-/** 语义检索（两段式）：向量粗召回 → rerank 精排(若模型支持)。rerank 失败自动退回纯向量 */
-export async function searchKb(model: Embedder, query: string, k = 4): Promise<KbHit[]> {
+/** 分类联动判定：categories 为空/未设 = 允许引用全部分类；否则必须命中允许列表 */
+export function isKbCategoryAllowed(category: string, categories?: string[]): boolean {
+  return !categories || categories.length === 0 || categories.includes(category);
+}
+
+/** 语义检索（两段式）：向量粗召回 → rerank 精排(若模型支持)。rerank 失败自动退回纯向量。
+ *  categories 可选：只检索这些分类的文档（分类联动：场景声明可引用的分类，存库时打的标签决定谁能引用它）。 */
+export async function searchKb(model: Embedder, query: string, k = 4, categories?: string[]): Promise<KbHit[]> {
   const [qvec] = await model.embed([query]);
   const scored: KbHit[] = [];
   for (const doc of listKb()) {
+    if (!isKbCategoryAllowed(doc.category, categories)) continue; // 分类联动：跳过场景不允许引用的分类
     for (const c of doc.chunks ?? []) {
       if (!c.vec || c.vec.length === 0) continue;
       scored.push({ score: cosine(qvec, vecFromB64(c.vec)), title: doc.title, category: doc.category, text: c.text });

@@ -116,6 +116,9 @@ describe("videoWorkshopScene", () => {
   it("tools 只挂 search_kb", () => {
     expect(videoWorkshopScene.tools).toEqual(["search_kb"]);
   });
+  it("短视频工场分类联动：只引用「短视频素材」分类", () => {
+    expect(videoWorkshopScene.kbCategories).toEqual(["短视频素材"]);
+  });
   it("buildSystemPrompt 默认不注入写作模板", () => {
     expect(videoWorkshopScene.buildSystemPrompt()).not.toContain("【本任务使用");
   });
@@ -127,6 +130,10 @@ describe("videoWorkshopScene", () => {
     expect(list).toContain("干货清单型");
     const emotional = videoWorkshopScene.buildSystemPrompt({ template: "emotional" });
     expect(emotional).toContain("情绪共鸣型");
+    const memorial = videoWorkshopScene.buildSystemPrompt({ template: "memorial" });
+    expect(memorial).toContain("缅怀悼念型");
+    expect(memorial).toContain("细节切入");
+    expect(memorial).toContain("不消费逝者");
   });
   it("buildSystemPrompt 非法 template 回退通用", () => {
     expect(videoWorkshopScene.buildSystemPrompt({ template: "nope" })).not.toContain("【本任务使用");

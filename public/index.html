@@ -427,7 +427,18 @@
     <div class="view" id="view-agent-list" hidden><div class="placeholder"><span class="p-icon">⚡</span><h2>Agent 列表</h2><p>你创建的 Agent 会出现在这里。<br>功能开发中，即将上线。</p><span class="soon-tag">SOON</span></div></div>
     <div class="view" id="view-workflow-new" hidden><div class="placeholder"><span class="p-icon">🔄</span><h2>工作流 新建</h2><p>把多步任务编排成一条自动化流水线。<br>功能开发中，即将上线。</p><span class="soon-tag">SOON</span></div></div>
     <div class="view" id="view-workflow-list" hidden><div class="placeholder"><span class="p-icon">🔄</span><h2>工作流 列表</h2><p>你的工作流会出现在这里。<br>功能开发中，即将上线。</p><span class="soon-tag">SOON</span></div></div>
-    <div class="view" id="view-kb-new" hidden><div class="placeholder"><span class="p-icon">📚</span><h2>知识库 新建</h2><p>上传文档，让时光机基于你的资料回答问题。<br>功能开发中，即将上线。</p><span class="soon-tag">SOON</span></div></div>
+    <div class="view" id="view-kb-new" hidden>
+      <div class="scene-page">
+        <h2>📚 知识库 · 新建</h2>
+        <div class="scene-sub">上传文档（pdf / docx / html / txt），解析后 AI 分类存入知识库，之后可"基于我的知识库…"提问。</div>
+        <div class="scene-form" style="flex-direction:row;align-items:center;gap:12px">
+          <input type="file" id="kbNewFile" accept=".pdf,.docx,.html,.htm,.md,.txt" hidden>
+          <button class="send-btn" id="kbNewPickBtn">📎 选择文件</button>
+          <span class="hint" id="kbNewStatus"></span>
+        </div>
+        <div id="kbNewCard" style="margin-top:16px;max-width:560px"></div>
+      </div>
+    </div>
     <div class="view" id="view-kb-list" hidden>
       <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
         <strong>📚 知识库</strong>
@@ -519,6 +530,7 @@
               <option value="story">悬念故事型 —— 反差钩子/时间线/泪点/排比回收</option>
               <option value="list">干货清单型 —— 痛点钩子/N 招逐条/避坑/CTA</option>
               <option value="emotional">情绪共鸣型 —— 场景代入/白描/转折/共鸣金句</option>
+              <option value="memorial">缅怀悼念型 —— 细节切入/白描+原话/情感留白/升华珍惜/树洞式 CTA</option>
             </select>
           </label>
           <label class="check"><input type="checkbox" id="svUseKb" checked> 先从知识库检索参考素材（没存过素材会直接创作）</label>
@@ -1137,7 +1149,7 @@ async function loadKbList() {
     const resp = await fetch("/kb");
     const r = await resp.json();
     const items = r.items || [];
-    if (!items.length) { box.innerHTML = `<div class="placeholder" style="flex:1"><span class="p-icon">📚</span><p>还没有文档。<br>去聊天里上传一份，点「📥 存入知识库」就会出现在这。</p></div>`; return; }
+    if (!items.length) { box.innerHTML = `<div class="placeholder" style="flex:1"><span class="p-icon">📚</span><p>还没有文档。<br>去「知识库 → 新建」上传，或在聊天里用 📎 上传后点「📥 存入知识库」，就会出现在这。</p></div>`; return; }
     box.innerHTML = "";
     items.forEach((it) => {
       const d = document.createElement("div");
@@ -1154,6 +1166,78 @@ async function loadKbList() {
   } catch (e) { box.innerHTML = "加载失败：" + e; }
 }
 async function deleteKbItem(id) { await fetch("/kb/" + id, { method: "DELETE" }); loadKbList(); }
+
+// ---------- 知识库 · 新建：上传 → 解析 → 分类 → 存库（复用 /upload /categorize /kb） ----------
+let kbDoc = null;
+$("kbNewPickBtn").addEventListener("click", () => $("kbNewFile").click());
+$("kbNewFile").addEventListener("change", async () => {
+  const file = $("kbNewFile").files[0];
+  $("kbNewFile").value = ""; // 允许重复选同一文件
+  if (!file) return;
+  const status = $("kbNewStatus");
+  status.textContent = "解析中…";
+  try {
+    const buf = await file.arrayBuffer();
+    const resp = await fetch("/upload?name=" + encodeURIComponent(file.name), { method: "POST", body: buf });
+    const result = await resp.json();
+    if (!result.ok) throw new Error(result.error || "解析失败");
+    kbDoc = { name: result.name, type: result.type, chars: result.chars, text: result.text };
+    status.textContent = "";
+    renderKbNewCard();
+  } catch (err) {
+    status.textContent = "⚠️ " + (err instanceof Error ? err.message : String(err));
+  }
+});
+function renderKbNewCard() {
+  const box = $("kbNewCard");
+  if (!kbDoc) { box.innerHTML = ""; return; }
+  box.innerHTML = `
+    <div class="doc-card">
+      <div class="dc-head"><span>📄</span><span class="dc-name">${escapeHtml(kbDoc.name)}</span></div>
+      <div class="dc-meta">${kbDoc.type} · ${kbDoc.chars} 字 · 已解析</div>
+      <div class="dc-row">
+        <select id="kbNewCat">
+          <option>未分类</option><option>求职·面试题</option><option>技术文档</option><option>项目文档</option>
+          <option>学习笔记</option><option>简历·求职材料</option><option>短视频素材</option><option>工作资料</option><option>其他</option>
+        </select>
+        <button class="small-btn" onclick="kbNewAiCategorize()">✨ AI 识别</button>
+        <button class="small-btn save-btn" onclick="kbNewSave()">📥 存入知识库</button>
+        <button class="small-btn" onclick="kbNewDiscard()">✕ 丢弃</button>
+      </div>
+      <div class="dc-hint" id="kbNewHint">点「✨ AI 识别」让模型定分类，或手动选后存库</div>
+    </div>`;
+}
+async function kbNewAiCategorize() {
+  if (!kbDoc) return;
+  const hint = document.getElementById("kbNewHint");
+  hint.textContent = "AI 正在识别分类…";
+  try {
+    const resp = await fetch("/categorize", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: kbDoc.name, text: kbDoc.text }) });
+    const r = await resp.json();
+    if (r.ok) { document.getElementById("kbNewCat").value = r.category; hint.textContent = `AI 识别为「${r.category}」，可手动改`; }
+    else hint.textContent = "AI 识别失败，请手动选";
+  } catch { hint.textContent = "AI 识别失败，请手动选"; }
+}
+async function kbNewSave() {
+  if (!kbDoc) return;
+  const category = document.getElementById("kbNewCat").value || "未分类";
+  try {
+    const resp = await fetch("/kb", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: kbDoc.name, type: kbDoc.type, category, content: kbDoc.text }) });
+    const r = await resp.json();
+    if (!r.ok) throw new Error(r.error || "存库失败");
+    kbDoc = null;
+    $("kbNewCard").innerHTML = `<div class="msg assistant" style="max-width:none">✅ 已存入知识库（分类：${escapeHtml(category)}），可到「列表」查看，或直接问"基于我的知识库…"。</div>`;
+    if (!document.getElementById("view-kb-list").hidden) loadKbList(); // 列表开着就刷新
+  } catch (err) {
+    document.getElementById("kbNewHint").textContent = "⚠️ 存库失败：" + (err instanceof Error ? err.message : String(err));
+  }
+}
+function kbNewDiscard() {
+  kbDoc = null;
+  $("kbNewCard").innerHTML = "";
+  $("kbNewStatus").textContent = "";
+}
 
 // ---------- 拾光·抓取网址：输入链接 → 抓正文 → 卡片可存库 ----------
 async function fetchFromUrlInput() {
@@ -1223,6 +1307,7 @@ async function runVideoWorkshop() {
     const decoder = new TextDecoder();
     let buf = "";
     let textCount = 0;
+    let gotResult = false;
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -1233,7 +1318,7 @@ async function runVideoWorkshop() {
         const line = chunk.trim();
         if (!line.startsWith("data: ")) continue;
         const ev = JSON.parse(line.slice(6));
-        if (ev.type === "scene_result") renderMaterial(ev.data, out);
+        if (ev.type === "scene_result") { gotResult = true; renderMaterial(ev.data, out); }
         else if (ev.type === "text") {
           // 两段式：第 1 段初稿、第 2 段自检修订 → 给用户进度反馈，避免以为卡死
           textCount++;
@@ -1242,9 +1327,11 @@ async function runVideoWorkshop() {
             : "🔍 评审修订完成，正在收尾…";
           out.innerHTML = `<div class="typing">${stage}</div>`;
         }
-        else if (ev.type === "error") out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(ev.text)}</div>`;
+        else if (ev.type === "error") { gotResult = true; out.innerHTML = `<div class="msg assistant" style="max-width:none;white-space:pre-wrap">⚠️ ${escapeHtml(ev.text)}</div>`; }
       }
     }
+    // 兜底：流正常结束但既没结果也没报错（如服务端解析失败静默收尾），别让页面停在进度文案
+    if (!gotResult) out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ 结果接收中断，未拿到最终物料包，请重试（可换更短的时长档位）。</div>`;
   } catch (e) {
     out.innerHTML = `<div class="msg assistant" style="max-width:none">⚠️ ${escapeHtml(String(e))}</div>`;
   } finally {

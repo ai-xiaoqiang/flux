@@ -33,6 +33,8 @@ export interface SceneDef {
   buildCheckMessage?(outputText: string): string | null;
   /** 运行时可用的内置工具名（默认 []；短视频工场 = ["search_kb"]） */
   tools?: string[];
+  /** 本场景可引用的知识库分类（search_kb 只在这些分类里召回）；不设 = 可引用全部分类 */
+  kbCategories?: string[];
   /** 预留挂载点：第三方能力（如视频生成 API），本期为空 */
   integrations?: Record<string, unknown>;
 }

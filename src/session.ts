@@ -18,6 +18,8 @@ export interface SessionOptions {
   systemPrompt?: string;
   /** 覆盖工具集合（场景只需挂自己需要的工具，默认全部内置工具） */
   tools?: FluxTool[];
+  /** 本会话限定的知识库分类（场景用，search_kb 只在这些分类里检索）；不设 = 全部分类 */
+  kbCategories?: string[];
 }
 
 /** 单次会话最多来回多少轮，防止大脑陷入死循环。分析类任务常需多轮，故放宽 */
@@ -44,11 +46,14 @@ export class AgentSession {
   private cwd: string;
   /** 本会话的 system prompt（默认人设或场景注入），reset/恢复时复用 */
   private systemPrompt: string;
+  /** 本会话限定的知识库分类（场景用，传给 search_kb 做过滤） */
+  private kbCategories?: string[];
 
   constructor(private config: FluxConfig, opts: SessionOptions = {}) {
     this.model = new FluxModel(config);
     this.registry = opts.tools ? registryFromTools(opts.tools) : builtinRegistry();
     this.cwd = config.cwd;
+    this.kbCategories = opts.kbCategories;
     // 起航时翻开"记忆本"：把 ~/.flux/memory.md 里记过的事，拼进航行手册（场景用自己的 prompt）
     this.systemPrompt = opts.systemPrompt ?? buildSystemPrompt(loadMemory());
     this.messages = [{ role: "system", content: this.systemPrompt }];
@@ -87,7 +92,7 @@ export class AgentSession {
         } else if (tool.risk !== "read" && confirm && !(await confirm(tool, call.args))) {
           result = `用户拒绝了执行「${tool.name}」。如确有必要，请先征求用户同意再试。`; // 审批不过：不执行，如实告诉大脑
         } else {
-          result = await tool.execute(call.args, { cwd: this.cwd, model: this.model });
+          result = await tool.execute(call.args, { cwd: this.cwd, model: this.model, kbCategories: this.kbCategories });
         }
         emit({ type: "tool_result", name: call.name, content: result });
         // 工具结果作为一条 role=tool 的消息回填，下一轮大脑就"看到"了

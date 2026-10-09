@@ -20,6 +20,8 @@ export interface ToolContext {
     embed(texts: string[]): Promise<number[][]>;
     rerank?(query: string, documents: string[], topN?: number): Promise<Array<{ index: number; relevance_score: number }>>;
   };
+  /** 本会话限定的知识库分类（场景用：search_kb 只在这些分类里检索）；不设 = 全部分类 */
+  kbCategories?: string[];
 }
 
 /** 一个工具的契约。新增工具 = 实现这个接口然后注册 */
